@@ -533,54 +533,38 @@ $$
 
 ## 13. Formula evolution chart
 
-Below is a Mermaid diagram that can be pasted directly into Markdown files that support Mermaid.
+Evolution with two stages: Discrete-time models and Discrete-time models
 
 ```mermaid
 flowchart TB
-    A["RNN<br/>h_t = φ(W_x x_t + W_h h_{t-1} + b)"]
-    B["LSTM<br/>c_t = f_t ⊙ c_{t-1} + i_t ⊙ c̃_t"]
-    C["CT-RNN<br/>dx/dt = -x/τ + f(x, I, t, θ)"]
-    D["Neural ODE<br/>dh/dt = f(h, I, t, θ)"]
-    E["LTC<br/>dx/dt = -(1/τ + f)x + fA"]
+    subgraph G1["Discrete-time Models"]
+        A["RNN<br/>h_t = φ(W_x x_t + W_h h_{t-1} + b)"]
+        B["LSTM<br/>c_t = f_t ⊙ c_{t-1} + i_t ⊙ c̃_t"]
+        A -->|add gates| B
+    end
 
-    A -->|add gates| B
-    B -->|continuous-time reformulation| C
-    C -->|generalize the derivative| D
-    D -->|adaptive time constant| E
+    subgraph G2["Continuous-time Models"]
+        C["CT-RNN<br/>dx/dt = -x/τ + f(x, I, t, θ)"]
+        D["Neural ODE<br/>dh/dt = f(h, I, t, θ)"]
+        E["LTC<br/>dx/dt = -(1/τ + f)x + fA"]
+        C -->|generalize the derivative| D
+        D -->|adaptive time constant| E
+    end
+
+    B -->|move from discrete updates to continuous dynamics| C
 ```
 
-- **RNN**: basic discrete-time recurrence with short-term memory.
-- **LSTM**: introduces gated memory to preserve long-range information more effectively.
-- **CT-RNN**: reformulates recurrence as a continuous-time dynamical system with a fixed time constant.
-- **Neural ODE**: directly models the state derivative with a neural network.
-- **LTC**: introduces an input-dependent adaptive time constant, leading to liquid dynamics.
+| Model | Key idea |
+|------|----------|
+| RNN | Basic discrete-time recurrent update with short-term memory. |
+| LSTM | Adds gates to decide what to keep, forget, and write. |
+| CT-RNN | Moves from discrete recurrence to continuous-time dynamics. |
+| Neural ODE | Learns the derivative directly with a neural network. |
+| LTC | Makes the effective time constant adaptive and input-dependent. |
 
 ---
 
-## 14. Plain-text fallback version of the evolution chart
-
-If your Markdown platform does not support Mermaid, you can use this plain-text version:
-
-```text
-RNN
-  h_t = φ(W_x x_t + W_h h_{t-1} + b)
-    ↓ add gates
-LSTM
-  c_t = f_t ⊙ c_{t-1} + i_t ⊙ c̃_t
-    ↓ continuous-time reformulation
-CT-RNN
-  dx/dt = -x/τ + f(x, I, t, θ)
-    ↓ generalize the derivative
-Neural ODE
-  dh/dt = f(h, I, t, θ)
-    ↓ adaptive time scale
-LTC
-  dx/dt = -(1/τ + f)x + fA
-```
-
----
-
-## 15. Final takeaway
+## 14. Final takeaway
 
 The historical logic is not just "new formulas replacing old formulas". Each stage tries to fix a real limitation of the previous one.
 

@@ -230,13 +230,13 @@ Instead of a discrete hidden state $h_t$, we now use a continuous-time state $h(
 The model is no longer written as a step-to-step update. Instead, it is described by a differential equation:
 
 $$
-\frac{dh(t)}{dt} = F(h(t), I(t), t)
+\frac{dh(t)}{dt} = F(h(t), x(t), t)
 $$
 
 Here:
 
 - $h(t)$ is the hidden state at continuous time $t$
-- $I(t)$ is the input signal
+- $x(t)$ is the input signal
 - $\frac{dh}{dt}$ tells us how the state changes at this moment
 
 ### A classical CT-RNN form
@@ -244,7 +244,7 @@ Here:
 A very common form is:
 
 $$
-\frac{dh(t)}{dt} = -\frac{h(t)}{\tau} + f(h(t), I(t), t, \theta)
+\frac{dh(t)}{dt} = -\frac{h(t)}{\tau} + f(h(t), x(t), t, \theta)
 $$
 
 ### What does this mean?
@@ -262,7 +262,7 @@ If nothing drives the system, the state decays toward equilibrium.
 #### 2. Driving term
 
 $$
-f(h(t), I(t), t, \theta)
+f(h(t), x(t), t, \theta)
 $$
 
 This is the nonlinear input-dependent force pushing the state.

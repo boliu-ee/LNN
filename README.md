@@ -239,42 +239,7 @@ Here:
 - $x(t)$ is the input signal
 - $\frac{dh}{dt}$ tells us how the state changes at this moment
 
-### A classical CT-RNN form
-
-A very common form is:
-
-$$
-\frac{dh(t)}{dt} = -\frac{h(t)}{\tau} + f(h(t), x(t), t, \theta)
-$$
-
-### What does this mean?
-
-This equation has two parts.
-
-#### 1. Leakage / decay term
-
-$$
--\frac{h(t)}{\tau}
-$$
-
-If nothing drives the system, the state decays toward equilibrium.
-
-#### 2. Driving term
-
-$$
-f(h(t), x(t), t, \theta)
-$$
-
-This is the nonlinear input-dependent force pushing the state.
-
-### Intuition
-
-You can imagine each hidden unit as a small physical system:
-
-- it naturally relaxes over time
-- but inputs and recurrent interactions push it around
-
-This is already much closer to physics and biological neural dynamics than a purely discrete RNN.
+This kind of form is theoretically meaningful but not practical for specific training.
 
 ### Why CT-RNNs matter
 
@@ -285,8 +250,39 @@ They are useful because they:
 - connect neural networks with dynamical systems theory
 
 ---
+## 7. Three following models for CT-RNN
 
-## 7. Neural ODE: an even more general continuous-time view
+To specify the CT-RNN formula for training, there are typical three models. 
+
+### Summarize first
+
+#### Neural ODE (Ordinary Differential Equation)
+
+$$
+\dot{x} = f(x, I, t, \theta)
+$$
+
+The network directly defines the derivative.
+
+#### Classical CT-RNN
+
+$$
+\dot{x} = -\frac{x}{\tau} + f(x, I, t, \theta)
+$$
+
+There is a fixed decay term plus a nonlinear driving term.
+
+#### LTC (Liquid Time-Constant)
+
+$$
+\dot{x} = -\left(\frac{1}{\tau}+f(x,I,t,\theta)\right)x + f(x,I,t,\theta)A
+$$
+
+Now the nonlinear term also changes the **effective time constant**.
+
+---
+
+### Neural ODE: an even more general continuous-time view
 
 A **Neural ODE** is the most direct continuous-time formulation:
 
@@ -300,7 +296,7 @@ $$
 \frac{dh(t)}{dt} = f(h(t), I(t), t, \theta)
 $$
 
-### Key idea
+#### Key idea
 
 Instead of defining the next hidden state directly, the network defines the **instantaneous derivative**.
 
@@ -308,7 +304,7 @@ In other words, the model says:
 
 > "I will not tell you the next state directly. I will tell you how the current state should change right now."
 
-### Why Neural ODE was exciting
+#### Why Neural ODE was exciting
 
 It can be viewed as the continuous-depth limit of a ResNet.
 
@@ -330,14 +326,14 @@ $$
 \frac{dh(t)}{dt} = f(h(t), t, \theta)
 $$
 
-### Strengths of Neural ODEs
+#### Strengths of Neural ODEs
 
 - elegant continuous-time formulation
 - natural connection to dynamical systems
 - flexible numerical solvers can be used
 - adaptive computation is possible
 
-### Main limitation
+#### Main limitation
 
 Neural ODEs are very flexible, but also very **black-box**:
 
@@ -349,7 +345,48 @@ This motivates more structured continuous-time models.
 
 ---
 
-## 8. From CT-RNN and Neural ODE to LTC
+### A classical CT-RNN form
+
+A very common form is:
+
+$$
+\frac{dh(t)}{dt} = -\frac{h(t)}{\tau} + f(h(t), x(t), t, \theta)
+$$
+
+#### What does this mean?
+
+This equation has two parts.
+
+##### 1. Leakage / decay term
+
+$$
+-\frac{h(t)}{\tau}
+$$
+
+If nothing drives the system, the state decays toward equilibrium.
+
+##### 2. Driving term
+
+$$
+f(h(t), x(t), t, \theta)
+$$
+
+This is the nonlinear input-dependent force pushing the state.
+
+#### Intuition
+
+You can imagine each hidden unit as a small physical system:
+
+- it naturally relaxes over time
+- but inputs and recurrent interactions push it around
+
+This is already much closer to physics and biological neural dynamics than a purely discrete RNN.
+
+
+---
+
+
+### From Neural ODE and Classical CT-RNN to LTC
 
 At this point, the main question becomes:
 
@@ -359,7 +396,7 @@ This is where **Liquid Time-Constant Networks (LTCs)** come in.
 
 ---
 
-## 9. LTC: the key idea behind liquid neural networks
+### LTC: the key idea behind liquid neural networks
 
 The central idea of LTC is:
 
@@ -373,7 +410,7 @@ $$
 
 This can be understood as a structured dynamical system.
 
-### Compare it with earlier models
+### Compare three models again
 
 #### Neural ODE
 
@@ -399,6 +436,9 @@ $$
 
 Now the nonlinear term also changes the **effective time constant**.
 
+
+---
+
 ### Why is it called "liquid"?
 
 Because the effective time constant is no longer fixed. It changes with the state and input.
@@ -415,7 +455,7 @@ So the response speed of the system becomes dynamic:
 - sometimes slow
 - depending on the current context
 
-### Intuition
+#### Intuition
 
 A classical CT-RNN says:
 

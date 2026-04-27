@@ -547,8 +547,8 @@ flowchart TB
         C["CT-RNN"]
         D["Neural ODE"]
         E["LTC"]
-        C -->|generalize the derivative| D
-        D -->|adaptive time constant| E
+        C -->|learn derivative| D
+        D -->|adaptive τ| E
     end
 
     B -->|continuous-time| C

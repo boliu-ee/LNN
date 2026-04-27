@@ -536,7 +536,7 @@ $$
 Below is a Mermaid diagram that can be pasted directly into Markdown files that support Mermaid.
 
 ```mermaid
-flowchart LR
+flowchart TB
     A["RNN<br/>h_t = phi(W_x x_t + W_h h_{t-1} + b)<br/>Discrete recurrence<br/>Basic memory"]
     B["LSTM<br/>c_t = f_t ⊙ c_{t-1} + i_t ⊙ c~_t<br/>Discrete gated memory<br/>Keep / forget / write"]
     C["CT-RNN<br/>dx/dt = -x/τ + f(x, I, t, θ)<br/>Continuous-time state<br/>Fixed time constant"]
@@ -557,9 +557,7 @@ If your Markdown platform does not support Mermaid, you can use this plain-text 
 
 ```text
 RNN
-$$
 h_t = phi(W_x x_t + W_h h_{t-1} + b)
-$$
 -> discrete recurrence, basic memory
 
         |

@@ -533,8 +533,6 @@ $$
 
 ## 13. Formula evolution chart
 
-Evolution with two stages: Discrete-time models and Discrete-time models
-
 ```mermaid
 flowchart TB
     subgraph G1["Discrete-time Models"]
@@ -568,7 +566,7 @@ flowchart TB
 
 ## 14. Final takeaway
 
-The historical logic is not just "new formulas replacing old formulas". Each stage tries to fix a real limitation of the previous one.
+The historical logic in each evolution stage tries to fix a real limitation of the previous one.
 
 - **RNN** adds memory to neural networks.
 - **LSTM** makes memory management more reliable.

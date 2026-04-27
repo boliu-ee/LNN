@@ -537,17 +537,23 @@ Below is a Mermaid diagram that can be pasted directly into Markdown files that 
 
 ```mermaid
 flowchart TB
-    A["RNN<br/>h_t = phi(W_x x_t + W_h h_{t-1} + b)<br/>Discrete recurrence<br/>Basic memory"]
-    B["LSTM<br/>c_t = f_t ⊙ c_{t-1} + i_t ⊙ c~_t<br/>Discrete gated memory<br/>Keep / forget / write"]
-    C["CT-RNN<br/>dx/dt = -x/τ + f(x, I, t, θ)<br/>Continuous-time state<br/>Fixed time constant"]
-    D["Neural ODE<br/>dh/dt = f(h, I, t, θ)<br/>General learned derivative<br/>Continuous-depth dynamics"]
-    E["LTC<br/>dx/dt = -(1/τ + f)x + fA<br/>Adaptive time constant<br/>Liquid dynamics"]
+    A["RNN<br/>h_t = φ(W_x x_t + W_h h_{t-1} + b)"]
+    B["LSTM<br/>c_t = f_t ⊙ c_{t-1} + i_t ⊙ c̃_t"]
+    C["CT-RNN<br/>dx/dt = -x/τ + f(x, I, t, θ)"]
+    D["Neural ODE<br/>dh/dt = f(h, I, t, θ)"]
+    E["LTC<br/>dx/dt = -(1/τ + f)x + fA"]
 
     A -->|add gates| B
-    B -->|move from discrete updates to continuous dynamics| C
-    C -->|make derivative more general| D
-    D -->|make time scale adaptive and structured| E
+    B -->|continuous-time reformulation| C
+    C -->|generalize the derivative| D
+    D -->|adaptive time constant| E
 ```
+
+- **RNN**: basic discrete-time recurrence with short-term memory.
+- **LSTM**: introduces gated memory to preserve long-range information more effectively.
+- **CT-RNN**: reformulates recurrence as a continuous-time dynamical system with a fixed time constant.
+- **Neural ODE**: directly models the state derivative with a neural network.
+- **LTC**: introduces an input-dependent adaptive time constant, leading to liquid dynamics.
 
 ---
 
@@ -557,40 +563,19 @@ If your Markdown platform does not support Mermaid, you can use this plain-text 
 
 ```text
 RNN
-h_t = phi(W_x x_t + W_h h_{t-1} + b)
--> discrete recurrence, basic memory
-
-        |
-        | add gates for better memory control
-        v
-
+  h_t = φ(W_x x_t + W_h h_{t-1} + b)
+    ↓ add gates
 LSTM
-c_t = f_t ⊙ c_{t-1} + i_t ⊙ c~_t
--> discrete gated memory, better long-term retention
-
-        |
-        | move from discrete steps to continuous-time dynamics
-        v
-
+  c_t = f_t ⊙ c_{t-1} + i_t ⊙ c̃_t
+    ↓ continuous-time reformulation
 CT-RNN
-dx/dt = -x/τ + f(x, I, t, θ)
--> continuous hidden-state evolution with fixed time constant
-
-        |
-        | generalize the derivative field
-        v
-
+  dx/dt = -x/τ + f(x, I, t, θ)
+    ↓ generalize the derivative
 Neural ODE
-dh/dt = f(h, I, t, θ)
--> neural network directly defines the continuous-time derivative
-
-        |
-        | make the time scale itself adaptive
-        v
-
+  dh/dt = f(h, I, t, θ)
+    ↓ adaptive time scale
 LTC
-dx/dt = -(1/τ + f)x + fA
--> liquid time constant, input-dependent continuous dynamics
+  dx/dt = -(1/τ + f)x + fA
 ```
 
 ---

@@ -4,6 +4,16 @@ A beginner-friendly background note with key formulas
 
 ---
 
+## References
+
+1. Ramin Hasani, et al.. **Liquid Time-Constant Networks**. *AAAI*, 2021. 
+
+2. Mathias Lechner, et al.. **Neural Circuit Policies Enabling Auditable Autonomy**. *Nature Machine Intelligence*, 2020.
+
+3. Ramin Hasani, et al.. **Closed-Form Continuous-Time Neural Networks**. *Nature Machine Intelligence*, 2022. 
+
+---
+
 ## 1. Why do we need recurrent models at all?
 
 A standard feed-forward neural network takes an input vector and produces an output:

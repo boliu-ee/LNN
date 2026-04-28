@@ -1,0 +1,38 @@
+{
+  "FNN": {
+    "hidden_size": 9,
+    "params": 919,
+    "id_mse": 0.0775902196764946,
+    "stress_mse": 0.11281711608171463,
+    "stress_hard_mse": 0.12322761118412018,
+    "stress_switch_mse": 0.12269990146160126,
+    "stress_gap_mse": 0.14256437122821808
+  },
+  "RNN": {
+    "hidden_size": 27,
+    "params": 892,
+    "id_mse": 0.06750854104757309,
+    "stress_mse": 0.10402056574821472,
+    "stress_hard_mse": 0.11409144103527069,
+    "stress_switch_mse": 0.11305110901594162,
+    "stress_gap_mse": 0.13822312653064728
+  },
+  "LSTM": {
+    "hidden_size": 13,
+    "params": 950,
+    "id_mse": 0.07421815395355225,
+    "stress_mse": 0.10487226396799088,
+    "stress_hard_mse": 0.1137763112783432,
+    "stress_switch_mse": 0.11274448037147522,
+    "stress_gap_mse": 0.13203439116477966
+  },
+  "LTC": {
+    "hidden_size": 13,
+    "params": 863,
+    "id_mse": 0.1205696314573288,
+    "stress_mse": 0.13113486766815186,
+    "stress_hard_mse": 0.13529980182647705,
+    "stress_switch_mse": 0.13498346507549286,
+    "stress_gap_mse": 0.1529770791530609
+  }
+}

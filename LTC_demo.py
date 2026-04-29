@@ -16,11 +16,13 @@ np.random.seed(42)
 OUTPUT_DIR = "LTC_demo_outputs"  # 输出文件夹
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+
 # ================== 1. 数据生成 ==================
 def gen_sine(freq, duration, dt=0.05, noise=0.01):
     t = np.arange(0, duration, dt)
     x = np.sin(2 * np.pi * freq * t) + noise * np.random.randn(len(t))
     return t, x.astype(np.float32)
+
 
 # 训练集
 t_train, x_train = gen_sine(0.5, duration=100)
@@ -40,23 +42,28 @@ x_test_norm = (x_test - mean) / std
 
 window_size = 30
 
+
 def create_dataset(seq, window_size):
     X, y = [], []
     for i in range(len(seq) - window_size):
-        X.append(seq[i:i+window_size])
-        y.append(seq[i+window_size])
+        X.append(seq[i:i + window_size])
+        y.append(seq[i + window_size])
     return np.array(X), np.array(y).reshape(-1, 1)
+
 
 X_train_norm, y_train_norm = create_dataset(x_train_norm, window_size)
 X_train_t = torch.tensor(X_train_norm[..., np.newaxis], dtype=torch.float32).to(device)
 y_train_t = torch.tensor(y_train_norm, dtype=torch.float32).to(device)
 train_loader = DataLoader(TensorDataset(X_train_t, y_train_t), batch_size=64, shuffle=True)
 
+
 # ================== 2. 工具函数 ==================
 def count_params(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+
 TARGET_PARAMS = 1233  # 以16单元LSTM为基准
+
 
 # ---------- 模型定义 ----------
 class FNN(nn.Module):
@@ -68,35 +75,43 @@ class FNN(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_size, 1)
         )
+
     def forward(self, x):
         return self.net(x)
+
 
 class SimpleRNN(nn.Module):
     def __init__(self, hidden_size):
         super().__init__()
         self.rnn = nn.RNN(input_size=1, hidden_size=hidden_size, batch_first=True)
         self.fc = nn.Linear(hidden_size, 1)
+
     def forward(self, x, h0=None):
         out, hn = self.rnn(x, h0)
         return self.fc(out[:, -1, :])
+
 
 class LSTMModel(nn.Module):
     def __init__(self, hidden_size=16):
         super().__init__()
         self.lstm = nn.LSTM(input_size=1, hidden_size=hidden_size, batch_first=True)
         self.fc = nn.Linear(hidden_size, 1)
+
     def forward(self, x, states=None):
         out, (hn, cn) = self.lstm(x, states)
         return self.fc(out[:, -1, :])
+
 
 class LTCModel(nn.Module):
     def __init__(self, units):
         super().__init__()
         self.ltc = LTC(input_size=1, units=units, return_sequences=False, batch_first=True)
         self.fc = nn.Linear(units, 1)
+
     def forward(self, x, hx=None):
         out, hx = self.ltc(x, hx)
         return self.fc(out)
+
 
 # 自动选择LTC单元数
 best_ltc_units = 16
@@ -112,7 +127,7 @@ print(f"LTC units = {best_ltc_units}, param diff = {best_diff}")
 # FNN & RNN 最优尺寸
 fnn_hidden = round((TARGET_PARAMS - 1) / 32)
 a, b, c = 1, 4, 1 - TARGET_PARAMS
-rnn_hidden = int((-b + np.sqrt(b**2 - 4*a*c)) / (2*a))
+rnn_hidden = int((-b + np.sqrt(b ** 2 - 4 * a * c)) / (2 * a))
 print(f"FNN hidden = {fnn_hidden}, RNN hidden = {rnn_hidden}")
 
 # ================== 3. 初始化模型 ==================
@@ -152,6 +167,7 @@ for name, model in models.items():
     history[name] = losses
     print(f'  最终 Loss: {losses[-1]:.6f}\n')
 
+
 # ================== 5. 在线预测函数（带tau收集） ==================
 def online_predict_recurrent(model, seq_norm, window_size, cell_type, ltc_tau_out=None):
     def _sigmoid(v, mu, sigma):
@@ -181,7 +197,7 @@ def online_predict_recurrent(model, seq_norm, window_size, cell_type, ltc_tau_ou
             _, h = model.ltc(x_pre, h)
 
     with torch.no_grad():
-        for t in range(window_size, n-1):
+        for t in range(window_size, n - 1):
             x_t = torch.tensor(seq_norm[t], dtype=torch.float32).reshape(1, 1, 1).to(device)
             if cell_type == 'rnn':
                 out, h = model.rnn(x_t, h)
@@ -222,7 +238,7 @@ def online_predict_recurrent(model, seq_norm, window_size, cell_type, ltc_tau_ou
                     g_total = gleak + sensory_g + rec_g + eps
                     tau_now = (cm / g_total).detach().cpu().numpy()  # [H]
                     ltc_tau_out.append(tau_now)
-            preds[t+1] = model.fc(out).cpu().numpy().item()
+            preds[t + 1] = model.fc(out).cpu().numpy().item()
     return preds
 
 
@@ -230,13 +246,14 @@ def online_predict_fnn(model, seq_norm, window_size):
     n = len(seq_norm)
     preds = np.full(n, np.nan, dtype=np.float32)
     with torch.no_grad():
-        for t in range(window_size, n-1):
-            win = torch.tensor(seq_norm[t-window_size:t], dtype=torch.float32).reshape(1, window_size).to(device)
+        for t in range(window_size, n - 1):
+            win = torch.tensor(seq_norm[t - window_size:t], dtype=torch.float32).reshape(1, window_size).to(device)
             preds[t] = model(win).cpu().numpy().item()
     return preds
 
+
 # ================== 6. 计算预测 ==================
-ltc_tau_list = []   # 收集LTC的 tau 向量（每一步的形状 (units,)）
+ltc_tau_list = []  # 收集LTC的 tau 向量（每一步的形状 (units,)）
 
 preds_fnn = online_predict_fnn(models['FNN'], x_test_norm, window_size)
 preds_rnn = online_predict_recurrent(models['RNN'], x_test_norm, window_size, 'rnn')
@@ -244,9 +261,11 @@ preds_lstm = online_predict_recurrent(models['LSTM'], x_test_norm, window_size, 
 preds_ltc = online_predict_recurrent(models['LTC'], x_test_norm, window_size, 'ltc',
                                      ltc_tau_out=ltc_tau_list)
 
+
 # 反归一化
 def denorm(y):
     return y * std + mean
+
 
 preds_fnn_orig = denorm(preds_fnn)
 preds_rnn_orig = denorm(preds_rnn)
@@ -254,12 +273,14 @@ preds_lstm_orig = denorm(preds_lstm)
 preds_ltc_orig = denorm(preds_ltc)
 x_test_orig = x_test
 
+
 # ================== 7. 计算测试集MSE（忽略NaN） ==================
 def compute_mse(y_true, y_pred):
     mask = ~np.isnan(y_pred) & ~np.isnan(y_true)
     if np.sum(mask) == 0:
         return float('inf')
-    return np.mean((y_true[mask] - y_pred[mask])**2)
+    return np.mean((y_true[mask] - y_pred[mask]) ** 2)
+
 
 test_mse = {
     'FNN': compute_mse(x_test_orig, preds_fnn_orig),
@@ -322,12 +343,14 @@ fig3.tight_layout()
 fig3.savefig(os.path.join(OUTPUT_DIR, "prediction_comparison.png"), dpi=150)
 plt.close(fig3)
 
+
 # ---- 图4：滑动MSE ----
 def sliding_mse(y_true, y_pred, window=50):
     mse = []
-    for i in range(window, len(y_true)-1):
-        mse.append(np.mean((y_true[i-window:i] - y_pred[i-window:i])**2))
+    for i in range(window, len(y_true) - 1):
+        mse.append(np.mean((y_true[i - window:i] - y_pred[i - window:i]) ** 2))
     return np.array(mse)
+
 
 fig4, ax4 = plt.subplots(figsize=(12, 3))
 for name, pred in plot_items:
@@ -346,9 +369,9 @@ plt.close(fig4)
 
 # ---- 图5：LTC有效时间常数 tau ----
 if ltc_tau_list:
-    tau_array = np.array(ltc_tau_list)          # [steps, H]
+    tau_array = np.array(ltc_tau_list)  # [steps, H]
     num_steps = tau_array.shape[0]
-    tau_times = t_test[window_size : window_size + num_steps]
+    tau_times = t_test[window_size: window_size + num_steps]
 
     fig5, ax5 = plt.subplots(figsize=(12, 4))
     for neu in range(tau_array.shape[1]):

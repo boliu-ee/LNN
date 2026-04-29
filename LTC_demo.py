@@ -305,46 +305,96 @@ with open(json_path, 'w') as f:
     json.dump(results, f, indent=2, default=float)
 print(f"结果已保存至 {json_path}")
 
-# ================== 9. 绘图并保存 ==================
+# ================== 9. 论文级绘图并保存 ==================
 
-# ---- 图1：训练波形 ----
-fig1, ax1 = plt.subplots(figsize=(10, 3))
-ax1.plot(t_train, x_train, linewidth=0.6)
-ax1.set_title('Training signal (0.5 Hz sine + noise)')
+# ---------- 全局样式设置 ----------
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'DejaVu Serif'],
+    'font.size': 11,  # 基础字号
+    'axes.titlesize': 14,  # 标题字号
+    'axes.labelsize': 13,  # 轴标签字号
+    'xtick.labelsize': 11,  # 刻度字号
+    'ytick.labelsize': 11,
+    'legend.fontsize': 11,
+    'figure.dpi': 150,
+    'savefig.dpi': 300,  # 保存图片高分辨率
+    'savefig.bbox': 'tight',
+    'lines.linewidth': 1.2,
+    'axes.linewidth': 0.8,
+    'xtick.major.width': 0.8,
+    'ytick.major.width': 0.8,
+    'grid.alpha': 0.3,
+})
+# 使用一个干净的科学绘图风格（可选）
+try:
+    plt.style.use('seaborn-v0_8-whitegrid')
+except:
+    plt.style.use('seaborn-whitegrid')
+
+# 统一颜色
+COLOR_TRUE = 'gray'
+COLORS_MODELS = {
+    'FNN': '#e41a1c',  # 红
+    'RNN': '#377eb8',  # 蓝
+    'LSTM': '#4daf4a',  # 绿
+    'LTC': '#984ea3'  # 紫
+}
+
+
+# 辅助函数：在指定 x 位置添加竖虚线（频率突变点）
+def add_freq_change_lines(ax):
+    for t_change in [20, 40, 60]:
+        ax.axvline(t_change, color='darkgray', linestyle='--', linewidth=0.8, alpha=0.7)
+
+
+# ---------- 图1：训练波形 ----------
+fig1, ax1 = plt.subplots(figsize=(8, 2.2))
+ax1.plot(t_train, x_train, linewidth=0.8, color='black')
+ax1.set_title('Training Signal (0.5 Hz sine + noise)')
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('Amplitude')
-fig1.tight_layout()
-fig1.savefig(os.path.join(OUTPUT_DIR, "training_waveform.png"), dpi=150)
+fig1.tight_layout(pad=0.5)
+fig1.savefig(os.path.join(OUTPUT_DIR, "training_waveform.png"))
 plt.close(fig1)
 
-# ---- 图2：测试波形（分段频率） ----
-fig2, ax2 = plt.subplots(figsize=(10, 3))
-ax2.plot(t_test, x_test_orig, linewidth=0.6)
-ax2.set_title('Test signal (frequency jumps)')
+# ---------- 图2：测试波形（分段频率） ----------
+fig2, ax2 = plt.subplots(figsize=(8, 2.2))
+ax2.plot(t_test, x_test_orig, linewidth=0.8, color='black')
+ax2.set_title('Test Signal (Frequency Jumps)')
 ax2.set_xlabel('Time (s)')
 ax2.set_ylabel('Amplitude')
-for t_change in [20, 40, 60]:
-    ax2.axvline(t_change, color='red', linestyle='--', alpha=0.7)
-fig2.tight_layout()
-fig2.savefig(os.path.join(OUTPUT_DIR, "test_waveform.png"), dpi=150)
+add_freq_change_lines(ax2)
+fig2.tight_layout(pad=0.5)
+fig2.savefig(os.path.join(OUTPUT_DIR, "test_waveform.png"))
 plt.close(fig2)
 
-# ---- 图3：对比各模型预测 ----
-fig3, axes3 = plt.subplots(4, 1, figsize=(12, 8), sharex=True)
-plot_items = [('FNN', preds_fnn_orig), ('RNN', preds_rnn_orig),
-              ('LSTM', preds_lstm_orig), ('LTC', preds_ltc_orig)]
-for ax, (name, pred) in zip(axes3, plot_items):
-    ax.plot(t_test, x_test_orig, 'gray', linewidth=1, label='True')
-    ax.plot(t_test, pred, linewidth=1, label=name)
-    ax.set_title(name)
-    ax.legend()
+# ---------- 图3：对比各模型在线预测 ----------
+# 为紧凑，将4个子图画成2×2或继续保持4行，这里采用2×2布局，每图小但清晰
+fig3, axes3 = plt.subplots(2, 2, figsize=(8, 5), sharex=True, sharey=True)
+plot_items = [
+    ('FNN', preds_fnn_orig),
+    ('RNN', preds_rnn_orig),
+    ('LSTM', preds_lstm_orig),
+    ('LTC', preds_ltc_orig)
+]
+for ax, (name, pred) in zip(axes3.flat, plot_items):
+    ax.plot(t_test, x_test_orig, color=COLOR_TRUE, linewidth=0.8, label='True')
+    ax.plot(t_test, pred, color=COLORS_MODELS[name], linewidth=0.8, label=name)
+    ax.set_title(name, fontsize=12, pad=3)
     ax.set_ylim(-2, 2)
-fig3.tight_layout()
-fig3.savefig(os.path.join(OUTPUT_DIR, "prediction_comparison.png"), dpi=150)
+    ax.legend(loc='upper right', frameon=True, fancybox=False, edgecolor='gray')
+    add_freq_change_lines(ax)
+    if ax in axes3[-1, :]:
+        ax.set_xlabel('Time (s)')
+    if ax in axes3[:, 0]:
+        ax.set_ylabel('Amplitude')
+fig3.tight_layout(pad=0.5, h_pad=1.2, w_pad=1.0)
+fig3.savefig(os.path.join(OUTPUT_DIR, "prediction_comparison.png"))
 plt.close(fig3)
 
 
-# ---- 图4：滑动MSE ----
+# ---------- 图4：滑动MSE ----------
 def sliding_mse(y_true, y_pred, window=50):
     mse = []
     for i in range(window, len(y_true) - 1):
@@ -352,43 +402,42 @@ def sliding_mse(y_true, y_pred, window=50):
     return np.array(mse)
 
 
-fig4, ax4 = plt.subplots(figsize=(12, 3))
+fig4, ax4 = plt.subplots(figsize=(8, 2.8))
 for name, pred in plot_items:
     mse = sliding_mse(x_test_orig, pred)
-    ax4.plot(t_test[51:], mse, label=name)
-ax4.axvline(20, color='gray', linestyle='--', label='0.5→2Hz')
-ax4.axvline(40, color='gray', linestyle=':', label='2→1Hz')
-ax4.axvline(60, color='gray', linestyle='-.', label='1→0.2Hz')
-ax4.set_xlabel('Time')
-ax4.set_ylabel('Sliding MSE')
-ax4.legend()
-ax4.set_title('Online Prediction Error (equal-param)')
-fig4.tight_layout()
-fig4.savefig(os.path.join(OUTPUT_DIR, "sliding_mse.png"), dpi=150)
+    ax4.plot(t_test[51:], mse, label=name, color=COLORS_MODELS[name], linewidth=1.2)
+add_freq_change_lines(ax4)
+ax4.set_title('Online Prediction Error (Sliding MSE)')
+ax4.set_xlabel('Time (s)')
+ax4.set_ylabel('MSE')
+ax4.legend(loc='upper left', frameon=True, fancybox=False, edgecolor='gray')
+fig4.tight_layout(pad=0.5)
+fig4.savefig(os.path.join(OUTPUT_DIR, "sliding_mse.png"))
 plt.close(fig4)
 
-# ---- 图5：LTC有效时间常数 tau ----
-if ltc_tau_list:
-    tau_array = np.array(ltc_tau_list)  # [steps, H]
+# ---------- 图5：LTC 有效时间常数 τ 动态 ----------
+if ltc_tau_list:  # 使用之前收集的 tau（形状：[steps, H]）
+    tau_array = np.array(ltc_tau_list)  # [num_steps, units]
     num_steps = tau_array.shape[0]
     tau_times = t_test[window_size: window_size + num_steps]
 
-    fig5, ax5 = plt.subplots(figsize=(12, 4))
+    fig5, ax5 = plt.subplots(figsize=(8, 3))
+    # 绘制每个神经元的 τ（半透明细线）
     for neu in range(tau_array.shape[1]):
-        ax5.plot(tau_times, tau_array[:, neu], alpha=0.3, color='blue', linewidth=0.5)
+        ax5.plot(tau_times, tau_array[:, neu], alpha=0.75, color='blue', linewidth=0.5)
+    # 绘制均值（醒目粗线）
     mean_tau = tau_array.mean(axis=1)
-    ax5.plot(tau_times, mean_tau, 'red', linewidth=2, label='Mean τ')
-    ax5.set_title('LTC Effective Time Constant τ (computed from ODE params)')
+    ax5.plot(tau_times, mean_tau, color='red', linewidth=1.2, label='Mean τ')
+    ax5.set_title('LTC Effective Time Constant τ (per neuron)')
     ax5.set_xlabel('Time (s)')
     ax5.set_ylabel('τ')
-    ax5.legend()
-    for t_change in [20, 40, 60]:
-        ax5.axvline(t_change, color='gray', linestyle='--', alpha=0.5)
-    fig5.tight_layout()
-    fig5.savefig(os.path.join(OUTPUT_DIR, "ltc_tau_dynamics.png"), dpi=150)
+    ax5.legend(loc='best', frameon=True, fancybox=False, edgecolor='gray')
+    add_freq_change_lines(ax5)
+    fig5.tight_layout(pad=0.5)
+    fig5.savefig(os.path.join(OUTPUT_DIR, "ltc_tau_dynamics.png"))
     plt.close(fig5)
-    print(f"τ 图已保存，共 {num_steps} 步")
+    print(f"τ 动态图已保存，共 {num_steps} 步")
 else:
-    print("未收集到 tau 数据")
+    print("未收集到 tau 数据（τ 图已跳过）")
 
-print(f"\n所有输出已保存至文件夹：{OUTPUT_DIR}/")
+print(f"\n所有论文风格图片已保存至：{OUTPUT_DIR}/")
